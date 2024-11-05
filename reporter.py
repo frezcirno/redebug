@@ -3,6 +3,7 @@
 #
 # Jiyong Jang, 2012
 #
+import json
 import time
 from collections import defaultdict
 import common
@@ -178,3 +179,31 @@ class Reporter(object):
         print '[+] \"%s\" ... %.1fs\n' % (outfile, elapsed_time)
         return exact_nmatch
 
+    def output_json(self, outfile='output.json'):
+        exact_nmatch = self._exact_match()
+
+        with open(outfile, "w") as f:
+            for patch_id, contexts in self._context_dict.items():
+                patch = self._patch_list[patch_id]
+                for context in contexts:
+                    source = self._source_list[context.source_id]
+                    json.dump({
+                        "patch": {
+                            "id": patch.file_path,
+                            "content": patch.orig_lines,
+                            "feature": patch.norm_lines,
+                        },
+                        "source": {
+                            "filepath": source.file_path,
+                            "prev_context_line": context.prev_context_line,
+                            "start_line": context.start_line,
+                            "end_line": context.end_line,
+                            "next_context_line": context.next_context_line,
+                            "prev_context": source.orig_lines[context.prev_context_line:context.start_line],
+                            "context": source.orig_lines[context.start_line:context.end_line],
+                            "next_context": source.orig_lines[context.end_line:context.next_context_line]
+                        }
+                    }, f)
+                    f.write("\n")
+
+        return exact_nmatch

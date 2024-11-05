@@ -60,7 +60,16 @@ class PatchLoader(object):
         diff_orig_lines = []
 
         for line in patch_lines:
-            if line.startswith('--- '):
+            if line.startswith('--- ') and line.strip() != '---':
+                try:
+                    diff_paths = line.split(" ", 1)
+                    assert len(diff_paths) == 2
+                    diff_path = diff_paths[1].strip()
+                    assert diff_path.startswith("a/") or diff_path == "/dev/null"
+                except Exception as ex: # Bad line
+                    print(line, ex)
+                    continue
+
                 if diff_vuln_lines:
                     diff_norm_lines = self._normalize(''.join(diff_vuln_lines), magic_ext).split()
                     if len(diff_norm_lines) >= common.ngram_size:
@@ -73,7 +82,6 @@ class PatchLoader(object):
                     del diff_vuln_lines[:]
                     del diff_orig_lines[:]
 
-                diff_path = line.split()[1]
                 if diff_path == '/dev/null':
                     process_flag = False
                 else:
@@ -95,27 +103,30 @@ class PatchLoader(object):
                             common.verbose_print('      %s %d (ext: %d)' % (diff_file, diff_cnt, magic_ext))
                             path = '[%s] %s #%d' % (patch_filename, diff_file, diff_cnt)
                             hash_list = self._build_hash_list(diff_norm_lines)
-                            self._patch_list.append(common.PatchInfo(path, magic_ext, ''.join(diff_orig_lines), diff_norm_lines, hash_list))
+                            self._patch_list.append(common.PatchInfo(path, magic_ext, diff_orig_lines, diff_norm_lines, hash_list))
                         else:
                             common.verbose_print('      %s %d (ext: %d) - skipped (%d lines)' % (diff_file, diff_cnt, magic_ext, len(diff_norm_lines)))
-                        del diff_vuln_lines[:]
-                        del diff_orig_lines[:]
+                    diff_vuln_lines = []
+                    diff_orig_lines = []
                     diff_cnt += 1
 
                 elif line.startswith('-'):
                     diff_vuln_lines.append(line[1:])
-                    diff_orig_lines.append('<font color=\"#AA0000\">')
-                    diff_orig_lines.append(line.replace('<','&lt;').replace('>','&gt;'))
-                    diff_orig_lines.append('</font>')
+                    # diff_orig_lines.append('<font color=\"#AA0000\">')
+                    # diff_orig_lines.append(line.replace('<','&lt;').replace('>','&gt;'))
+                    # diff_orig_lines.append('</font>')
+                    diff_orig_lines.append(line.rstrip())
 
                 elif line.startswith('+'):
-                    diff_orig_lines.append('<font color=\"#00AA00\">')
-                    diff_orig_lines.append(line.replace('<','&lt;').replace('>','&gt;'))
-                    diff_orig_lines.append('</font>')
+                    # diff_orig_lines.append('<font color=\"#00AA00\">')
+                    # diff_orig_lines.append(line.replace('<','&lt;').replace('>','&gt;'))
+                    # diff_orig_lines.append('</font>')
+                    diff_orig_lines.append(line.rstrip())
 
                 elif line.startswith(' '):
                     diff_vuln_lines.append(line[1:])
-                    diff_orig_lines.append(line.replace('<','&lt;').replace('>','&gt;'))
+                    # diff_orig_lines.append(line.replace('<','&lt;').replace('>','&gt;'))
+                    diff_orig_lines.append(line.rstrip())
 
         if diff_vuln_lines:
             diff_norm_lines = self._normalize(''.join(diff_vuln_lines), magic_ext).split()
@@ -123,7 +134,7 @@ class PatchLoader(object):
                 common.verbose_print('      %s %d (ext: %d)' % (diff_file, diff_cnt, magic_ext))
                 path = '[%s] %s #%d' % (patch_filename, diff_file, diff_cnt)
                 hash_list = self._build_hash_list(diff_norm_lines)
-                self._patch_list.append(common.PatchInfo(path, magic_ext, ''.join(diff_orig_lines), diff_norm_lines, hash_list))
+                self._patch_list.append(common.PatchInfo(path, magic_ext, diff_orig_lines, diff_norm_lines, hash_list))
             else:
                 common.verbose_print('      %s %d (ext: %d) - skipped (%d lines)' % (diff_file, diff_cnt, magic_ext, len(diff_norm_lines)))
 

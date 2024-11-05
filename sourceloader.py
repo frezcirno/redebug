@@ -42,7 +42,7 @@ class SourceLoader(object):
             common.verbose_print('  [-] %s: %s' % (source_path, magic_type))
             if magic_type.startswith('text'):
                 main_type, sub_type = magic_type.split('/')
-                magic_ext = self._get_file_type(sub_type)
+                magic_ext = self._get_file_type(sub_type, source_path)
                 self._process(source_path, magic_ext)
         elif os.path.isdir(source_path):
             for root,dirs,files in os.walk(source_path):
@@ -52,7 +52,7 @@ class SourceLoader(object):
                     common.verbose_print('  [-] %s: %s' % (file_path, magic_type))
                     if magic_type.startswith('text'):
                         main_type, sub_type = magic_type.split('/')
-                        magic_ext = self._get_file_type(sub_type)
+                        magic_ext = self._get_file_type(sub_type, file_path)
                         self._process(file_path, magic_ext)
 
         elapsed_time = time.time() - start_time
@@ -176,14 +176,16 @@ class SourceLoader(object):
 
         return is_vuln_source
 
-    def _get_file_type(self, sub_type):
+    def _get_file_type(self, sub_type, file_path):
         '''
         Determine a file type based upon sub_type (magic module)
         '''
         magic_ext = None
-        if sub_type.startswith('x-c'):
+        if sub_type.startswith('x-c'): # C or C++
             magic_ext = common.FileExt.C
-        elif sub_type == 'x-java':
+        # Sometimes, the magic module not correctly determines the type for .java
+        # files. So, we use the file extension to determine the type.
+        elif sub_type == 'x-java' or file_path.endswith('.java'):
             magic_ext = common.FileExt.Java
         elif sub_type == 'x-shellscript':
             magic_ext = common.FileExt.ShellScript

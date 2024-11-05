@@ -39,13 +39,14 @@ def parse_args():
     # positional arguments
     parser.add_argument('patch_path', action='store', help='path to patch files (in unified diff format)')
     parser.add_argument('source_path', action='store', help='path to source files')
+    parser.add_argument('result_path', action='store', help='path to result file')
 
     try:
         args = parser.parse_args()
         common.ngram_size = args.ngram_size
         common.context_line = args.context_line
         common.verbose_mode = args.verbose_mode
-        return args.patch_path, args.source_path
+        return args.patch_path, args.source_path, args.result_path
     except IOError, msg:
         parser.error(str(msg))
 
@@ -54,12 +55,13 @@ if __name__ == '__main__':
 
     # parse arguments
     start_time = time.time()
-    patch_path, source_path = parse_args()
+    patch_path, source_path, result_path = parse_args()
     common.verbose_print('[-] ngram_size   : %d' % common.ngram_size)
     common.verbose_print('[-] context_line : %d' % common.context_line)
     common.verbose_print('[-] verbose_mode : %s' % common.verbose_mode)
     common.verbose_print('[-] patch_path   : %s' % patch_path)
     common.verbose_print('[-] source_path  : %s' % source_path)
+    common.verbose_print('[-] result_path  : %s' % result_path)
 
     # initialize a magic cookie pointer
     try:
@@ -85,7 +87,7 @@ if __name__ == '__main__':
 
     # generate a report
     report = reporter.Reporter(patch, source)
-    exact_nmatch = report.output()
+    exact_nmatch = report.output_json(result_path)
     if exact_nmatch == 0:
         print('[!] no exact match found')
         sys.exit(1)

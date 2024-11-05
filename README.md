@@ -1,3 +1,13 @@
+# Note
+
+1 redebug 匹配的逻辑是 exact match，只有patch中的n-gram全部都出现在源码里面才算作匹配；
+所以patch里面最好只有函数内的变更，不能包含一些乱七八糟的，比如+#include之类的
+
+2 redebug会提取patch中的‘-’行和‘ ’行作为gram；所以patch的内容要足够长，保证处理后的gram数量要大于n，不然这个patch就会被过滤掉
+
+3 redebug识别文件类型用的libmagic，注意安装特征文件
+
+
 # ReDeBug
 Unpatched code clone detection tool - reimplemented version in Python.
 
